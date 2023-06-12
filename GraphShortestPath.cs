@@ -202,7 +202,7 @@ namespace GraphShortestPath{
 
     }
     public class Program{
-        public static void Main(String[] args){
+        public static void Mainn(String[] args){
             Console.WriteLine("Hello Lets Starts Shorthest Path Algos");
             Graph g = new Graph(7);
             g.addEdgeDg(0,1,-1);
