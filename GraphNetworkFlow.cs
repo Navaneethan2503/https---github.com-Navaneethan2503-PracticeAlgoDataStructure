@@ -283,15 +283,83 @@ H - Weighted Graph     |  1) Min Cost Max Flow Algorithm     |  1) Dp Solutions 
         }
     }
 
+
+    class DanicSolver : NetworkFlowSolverBase{//Time Complexity: O(EV²) or O(E√V) for bipartite graphs
+        /*
+        Implementation of Dinic's network flow algorithm. The algorithm works by first constructing a
+ * level graph using a BFS and then finding augmenting paths on the level graph using multiple DFSs.
+During constructing the level graph if it finds building block / cannot reach sink then it return maxFlow .
+
+        */
+
+        int[] level;
+        public DanicSolver(long n, long s, long t):base(n,s,t){
+            level = new int[n];
+        }
+
+        public override void solve()
+        {
+            // next[i] indicates the next unused edge index in the adjacency list for node i.
+            int[] next = new int[n];//this is shimon Even and Alon optimization technique , which prevent from already visited building block . 
+            while(bfs()){
+                for(int i = 0; i<n; i++){
+                    next[i] = 0;
+                }
+                for(long f = dfs(s,next,INF); f!=0; f = dfs(s,next,INF)){
+                    maxFlow += f;
+                }
+            }
+        }
+
+        private bool bfs(){ // this construct all nodes must go from L To L+1 ;
+            for(int i = 0; i<n; i++){
+                level[i] = -1;
+            }
+            Queue<long> queue = new Queue<long>();
+            queue.Enqueue(s);
+            level[s] = 0;
+            while(queue.Count>0){
+                var node = queue.Dequeue();
+                foreach(Edge edge in adj[node]){
+                    long cap = edge.remainingCapacity();
+                    if(cap>0 && level[edge.to] == -1){
+                        level[edge.to] = level[node]+1;
+                        queue.Enqueue(edge.to);
+                    }
+                }
+            }
+            return level[t] != -1;//check whether level graph reached sink or not .
+        }
+
+        private long dfs(long at , int[] next , long flow){
+            if(at == t) return flow;
+            int edgeCount = adj[at].Count;
+            for(;next[at]<edgeCount;next[at]++){
+                Edge edge = adj[at][next[at]];
+                long cap = edge.remainingCapacity();
+                if(cap > 0 && level[edge.to] == level[at]+1){
+                    long bottleneck = dfs(edge.to,next,Math.Min(flow,cap));
+                    if(bottleneck>0){
+                        edge.arguments(bottleneck);
+                        return bottleneck;
+                    }
+                }
+            }
+            return 0;
+        }
+        
+    }
+
     class Program
     {
         public static void Main(String[] args)
         {
             System.Console.WriteLine("Graph Network Flow ");
+            /*
             long n = 12;
             long s = n-2;
             long t =n-1;
-            NetworkFlowSolverBase network = new CapacityScalingSolver(n,s,t);
+            NetworkFlowSolverBase network = new DanicSolver(n,s,t); // maxflow is 23
             //start
             network.addEdge(s,0,10);
             network.addEdge(s,1,5);
@@ -314,15 +382,14 @@ H - Weighted Graph     |  1) Min Cost Max Flow Algorithm     |  1) Dp Solutions 
             //sink
             network.addEdge(6,t,15);
             network.addEdge(8,t,10);
-            
-            /*
+            */
 
             int n = 6;
             int s = n - 1;
             int t = n - 2;
 
             NetworkFlowSolverBase solver;
-            solver = new CapacityScalingSolver(n, s, t);
+            solver = new DanicSolver(n, s, t);//maxFlow is 19
 
             // Source edges
             solver.addEdge(s, 0, 10);
@@ -339,11 +406,9 @@ H - Weighted Graph     |  1) Min Cost Max Flow Algorithm     |  1) Dp Solutions 
             solver.addEdge(1, 3, 9);
             solver.addEdge(3, 2, 6);
 
-            */
+            System.Console.WriteLine("Maximun flow is : {0}", solver.getMaxFlow());
 
-            System.Console.WriteLine("Maximun flow is : {0}", network.getMaxFlow());
-
-            List<Edge>[] resultGraph = network.getGraph();
+            List<Edge>[] resultGraph = solver.getGraph();
             int count = 1;
             foreach (var edges in resultGraph)
             {
