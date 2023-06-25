@@ -22,63 +22,56 @@ namespace HackerRank
 {
     class Solution
     {
-        static int[] findStartingPoint(List<string> matrix){
-            int[] index = new int[2];
-            bool isFind = true;
-            for(int i = 0; i<matrix.Count && isFind; i++){
-                for(int j = 0; j<matrix[i].Length; j++){
-                    if(matrix[i][j] == 'M'){
-                        index[0] = i;
-                        index[1] = j;
-                        isFind = false;
-                    }
-                }
+        public static int quickestWayUp(List<List<int>> ladders, List<List<int>> snakes)
+        {
+            bool[] visited = new bool[101];
+            IDictionary<int,int> graph = new Dictionary<int,int>();
+            for(int i = 0; i<ladders.Count; i++){
+                graph.Add(ladders[i][0], ladders[i][1]);
             }
-            return index;
-        }
-
-        static bool isValid(int i , int j , int n , int m){
-            if(i>=n || j>=m || i<0 || j<0 ) return false;
-            return true;
-        }
-        public static string countLuck(List<string> matrix, int k) {
-            int waves = 0;
-            var index = Solution.findStartingPoint(matrix);
-            int mi = index[0], mj = index[1];
-            var queue = new List<(int,int)>();
-            queue.Add((mi,mj));
-            var direction = new List<(int,int)>(){
-                (1,0), (-1,0),(0,-1), (0,1)
-            }; 
-            IDictionary<(int,int),int> isVisited = new Dictionary<(int,int), int>();
-            isVisited.Add((mi,mj), 1);
-            while(queue.Count > 0){
-                int i = queue[0].Item1, j = queue[0].Item2;
-                if(matrix[i][j] == '*') break;
-                queue.RemoveAt(0);
-                int count = 0;
-                foreach(var dir in direction){
-                    int di = dir.Item1, dj = dir.Item2;
-                    if( isValid((di+i), (dj+j), matrix.Count, matrix[i].Length) && !(isVisited.ContainsKey(((di+i),(dj+j))))){
-                        if(matrix[di+i][dj+j] == '.' || matrix[di+i][dj+j] == '*'){
-                            queue.Add((di+i, dj+j));
-                            isVisited.Add((di+i,dj+j), 1);
-                            count++;
+            for(int i = 0; i<snakes.Count; i++){
+                graph.Add(snakes[i][0], snakes[i][1]);
+            }
+            Queue<(int,int)> queue = new Queue<(int,int)>();
+            queue.Enqueue((1,0));
+            while(queue.Count>0){
+                var current = queue.Dequeue();
+                int node = current.Item1;
+                int rolls = current.Item2;
+                if(node == 100) return rolls;
+                visited[node] = true;
+                for(int i = 1; i<7; i++){
+                    int nextNode = node+i;
+                    if(nextNode<=100 && !visited[nextNode]){
+                        if(graph.ContainsKey(nextNode)){
+                            queue.Enqueue((graph[nextNode],rolls+1));
+                        }
+                        else{
+                            queue.Enqueue((nextNode,rolls+1));
                         }
                     }
                 }
-                if(count>1) waves++;
             }
-            return (waves == k)?"Impressed":"Oops!";
+            return -1;
         }
 
         public static void Mainn(string[] arg)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            List<string> matrix = new List<string>(){".X.X......X", ".X*.X.XXX.X", ".XX.X.XM...", "......XXXX."};
-            List<string> mat = new List<string>(){"*..", "X.X", "..M"};
-            var res = countLuck(mat, 1);
+            List<List<int>> ladders = new List<List<int>>();
+            ladders.Add(new List<int>(){32,62});
+            ladders.Add(new List<int>(){42,68});
+            ladders.Add(new List<int>(){12,98});
+            List<List<int>> snakes = new List<List<int>>();
+            snakes.Add(new List<int>(){95,13});
+            snakes.Add(new List<int>(){97,25});
+            snakes.Add(new List<int>(){93,37});
+            snakes.Add(new List<int>(){79,27});
+            snakes.Add(new List<int>(){75,19});
+            snakes.Add(new List<int>(){49,47});
+            snakes.Add(new List<int>(){67,17});
+            var res = quickestWayUp(ladders, snakes);
             System.Console.WriteLine(res);
             stopwatch.Stop();
             System.Console.WriteLine(stopwatch.ElapsedMilliseconds * 0.001);
